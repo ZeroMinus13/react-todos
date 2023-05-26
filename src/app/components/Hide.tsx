@@ -2,7 +2,7 @@
 import { useState } from 'react';
 
 function ShowForm({ children }: { children: React.ReactNode }) {
-  const [isHidden, setIsHidden] = useState(false);
+  const [isHidden, setIsHidden] = useState(true);
   return (
     <div className='flex flex-col'>
       {!!isHidden && children}
