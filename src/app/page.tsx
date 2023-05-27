@@ -1,18 +1,19 @@
 import Form from './components/Form';
 import ShowForm from './components/Hide';
-import React, { use } from 'react';
-import db from '../../database/db';
-import todoSchema from '../../database/schema';
+import React from 'react';
+import TodosList from './components/TodosList';
 
+import { Suspense } from 'react';
 function Home() {
-  const data = use(db.select().from(todoSchema));
-  console.log(data);
   return (
     <main className='flex min-h-screen flex-col items-center justify-between p-12 bg-slate-800 text-sky-300'>
-      Todo
+      <h1>Todos</h1>
       <ShowForm>
         <Form />
       </ShowForm>
+      <Suspense fallback={<div>Loading...</div>}>
+        <TodosList />
+      </Suspense>
     </main>
   );
 }
