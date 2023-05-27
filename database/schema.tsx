@@ -4,7 +4,7 @@ import { serial, varchar, timestamp, boolean, mysqlTable, mysqlEnum, date } from
 const todoSchema = mysqlTable('todos', {
   id: serial('id').primaryKey(),
   title: varchar('title', { length: 20 }).notNull(),
-  content: varchar('content', { length: 100 }),
+  content: varchar('content', { length: 200 }),
   createdAt: timestamp('createdAt').defaultNow(),
   updatedAt: timestamp('updatedAt').defaultNow(),
   dueDate: date('dueDate'),
