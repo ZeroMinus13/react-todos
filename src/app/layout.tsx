@@ -4,8 +4,8 @@ import { Inter } from 'next/font/google';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata = {
-  title: 'ToDo App',
-  description: 'Create a todo',
+  title: 'Todo',
+  description: 'Create a todoList',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

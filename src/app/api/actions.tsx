@@ -1,5 +1,5 @@
 'use server';
-import { eq, sql } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import db from '../../../database/db';
 import todoSchema, { type todos } from '../../../database/schema';
 import { revalidatePath } from 'next/cache';
