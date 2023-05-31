@@ -19,7 +19,6 @@ function Form({ defaultShow }: { defaultShow: boolean }) {
       <button
         onClick={() => setShow(!show)}
         className='text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-600 font-medium rounded-lg px-5 py-2.5'
-        type='button'
       >
         {show ? '➕ Hide' : '➕ Add a Task'}
       </button>

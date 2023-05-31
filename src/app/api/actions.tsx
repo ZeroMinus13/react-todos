@@ -17,14 +17,8 @@ async function createPost(data: FormData) {
 }
 
 async function getData() {
-  //await new Promise((resolve) => setTimeout(resolve, 10000));
   return await db.select().from(todoSchema);
 }
-
-// async function getDataToday() {
-//   const currentDate = new Date().toISOString().split('T')[0];
-//   return await db.execute(sql.raw(`SELECT * FROM todos WHERE dueDate BETWEEN '20121211' and '20121213'`));
-// }
 
 async function deleteSingle(id: number) {
   await db.delete(todoSchema).where(eq(todoSchema.id, id));
