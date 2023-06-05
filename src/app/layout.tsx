@@ -11,6 +11,7 @@ export const metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang='en'>
+      <link rel='icon' href='/icon?<generated>' type='image/<generated>' sizes='<generated>' />
       <body className={inter.className}>{children}</body>
     </html>
   );

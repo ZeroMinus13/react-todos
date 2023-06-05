@@ -1,1 +1,1 @@
-Creating a todos with Nextjs, drizzle and planetscale.
+With: Nextjs, Typescript, Tailwind, Drizzle n Planetscale. <br />
