@@ -1,30 +1,38 @@
 'use client';
 import { useState, useRef } from 'react';
 import { createPost } from '../api/actions';
+import { useQueryClient, useMutation } from '@tanstack/react-query';
 
 function Form({ defaultShow }: { defaultShow: boolean }) {
   const [show, setShow] = useState(defaultShow);
   const formRef = useRef<HTMLFormElement>(null);
+
+  const queryClient = useQueryClient();
+  const { mutate, isLoading } = useMutation(createPost, {
+    onMutate: (data) => {
+      console.log(data);
+    },
+    onSuccess: (data) => {
+      formRef?.current?.reset();
+      setShow(false);
+      queryClient.invalidateQueries(['todos']);
+    },
+  });
+
   const formCSS =
     'block w-full p-2 rounded-lg focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500 bg-gray-700 border-gray-600 placeholder-gray-400 text-white';
-
-  function handleForm(data: FormData) {
-    createPost(data);
-    formRef?.current?.reset();
-    setShow(false);
-  }
 
   return (
     <>
       <button
         onClick={() => setShow(!show)}
-        className='text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-600 font-medium rounded-lg px-5 py-2.5'
+        className='text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-600 font-medium rounded-lg px-5 py-2.5 mb-2'
       >
         {show ? '➕ Hide' : '➕ Add a Task'}
       </button>
       {!!show && (
         <form
-          action={handleForm}
+          action={mutate}
           ref={formRef}
           className='bg-black bg-opacity-70 w-5/6 backdrop-blur-sm rounded drop-shadow-lg fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-blue-300 p-10'
         >
@@ -35,7 +43,6 @@ function Form({ defaultShow }: { defaultShow: boolean }) {
           >
             X
           </button>
-
           <div className='flex flex-col items-center p-5 gap-2 w-6/6'>
             <label className='font-bold text-2xl ' htmlFor='title'>
               Title
@@ -69,7 +76,7 @@ function Form({ defaultShow }: { defaultShow: boolean }) {
             <label htmlFor='priority' className='font-bold text-2xl'>
               Priority
             </label>
-            <select name='priority' id='priority' className='bg-gray-700 text-white p-2 w-40' defaultValue={'Medium'}>
+            <select name='priority' id='priority' className='bg-gray-700 text-white p-2 w-40' defaultValue='Medium'>
               <option value='High'>High</option>
               <option value='Medium'>Medium</option>
               <option value='Low'>Low</option>
@@ -77,9 +84,10 @@ function Form({ defaultShow }: { defaultShow: boolean }) {
 
             <button
               type='submit'
-              className='text-white bg-sky-700 hover:bg-sky-600 focus:outline-none focus:ring-1 focus:ring-blue-600 font-medium rounded-lg px-5 py-2.5'
+              className='text-white bg-sky-700 hover:bg-sky-600 focus:outline-none focus:ring-1 focus:ring-blue-600 font-medium rounded-lg px-5 py-2.5 disabled:opacity-50'
+              disabled={isLoading}
             >
-              Submit
+              {isLoading ? 'Submitting..' : 'Submit'}
             </button>
           </div>
         </form>

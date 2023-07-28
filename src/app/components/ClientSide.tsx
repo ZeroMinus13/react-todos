@@ -1,24 +1,28 @@
 'use client';
+import { UseMutateFunction } from '@tanstack/react-query/build/lib/types';
 import { type todos } from '../../../database/schema';
-import { deleteSingle, updateCheckbox, updatePriority } from '../api/actions';
+import { useState, type SetStateAction, useEffect } from 'react';
 
-function DeleteButton({ id }: { id: number }) {
+function DeleteButton({ id, deleteTodo, loading }: DeleteButton) {
   return (
     <button
       className='bg-red-500 text-white hover:bg-red-800 w-40 p-1 bold transition-transform hover:scale-110'
-      onClick={() => deleteSingle(id)}
+      onClick={() => deleteTodo({ id })}
     >
       Delete
     </button>
   );
 }
 
-function CheckboxHandler({ todo }: { todo: todos }) {
+function CheckboxHandler({ todo, updateCheckbox, setLoadingTodos }: Checkbox) {
   return (
     <input
       type='checkbox'
       checked={todo.check!}
-      onChange={() => updateCheckbox(todo.id, todo.check!)}
+      onChange={() => {
+        setLoadingTodos((prev) => [...prev, todo.id]);
+        updateCheckbox({ id: todo.id, bool: todo.check! });
+      }}
       name='check'
       className='w-5 h-5 cursor-pointer'
     />
@@ -87,5 +91,27 @@ function ChangeSelectedTodos({
     </div>
   );
 }
-
+type Checkbox = {
+  todo: todos;
+  updateCheckbox: UseMutateFunction<
+    void,
+    unknown,
+    {
+      id: number;
+      bool: boolean;
+    }
+  >;
+  setLoadingTodos: (value: SetStateAction<number[]>) => void;
+};
+type DeleteButton = {
+  id: number;
+  deleteTodo: UseMutateFunction<
+    void,
+    unknown,
+    {
+      id: number;
+    },
+    unknown
+  >;
+};
 export { DeleteButton, CheckboxHandler, SelectPriority, ChangeSelectedTodos };

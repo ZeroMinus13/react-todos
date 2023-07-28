@@ -17,7 +17,8 @@ async function createPost(data: FormData) {
 }
 
 async function getData() {
-  return await db.select().from(todoSchema);
+  let data = await db.select().from(todoSchema);
+  return data;
 }
 
 async function deleteSingle(id: number) {
@@ -25,14 +26,13 @@ async function deleteSingle(id: number) {
   revalidatePath('/');
 }
 
-async function updateCheckbox(id: number, bool: boolean) {
+async function serverCheckBox(id: number, bool: boolean): Promise<void> {
   await db.update(todoSchema).set({ check: !bool }).where(eq(todoSchema.id, id));
-  revalidatePath('/');
 }
 
-async function updatePriority(id: number, value: todos['priority']) {
+async function serverPriority(id: number, value: todos['priority']) {
   await db.update(todoSchema).set({ priority: value }).where(eq(todoSchema.id, id));
   revalidatePath('/');
 }
 
-export { createPost, getData, deleteSingle, updateCheckbox, updatePriority };
+export { createPost, getData, deleteSingle, serverCheckBox, serverPriority };

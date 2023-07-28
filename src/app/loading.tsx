@@ -1,6 +1,6 @@
 function Loading() {
   return (
-    <div className='fixed top-[50%] m-auto flex bg-slate-600 p-5'>
+    <div className='min-h-screen flex justify-center items-center bg-slate-600 p-5'>
       <div className='text-2xl'>
         <svg
           aria-hidden='true'

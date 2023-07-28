@@ -2,27 +2,61 @@
 import { useState, useMemo } from 'react';
 import { DeleteButton, CheckboxHandler, SelectPriority, ChangeSelectedTodos } from './ClientSide';
 import { type todos } from '../../../database/schema';
-import { updateCheckbox } from '../api/actions';
+import { useQueryClient, useQuery, useMutation } from '@tanstack/react-query';
+import { getData } from '../api/actions';
+import { creationDate, getDate } from '../libs/help';
+import { deleteSingle, serverCheckBox, serverPriority } from '../api/actions';
+import Loading from './Loading';
+import { clsx } from 'clsx';
+
+async function fetchData() {
+  return await getData();
+}
 
 function FilteredItems({ todos }: { todos: todos[] }) {
   const [search, setSearch] = useState('');
   const [selectedPriority, setselectedPriority] = useState('');
   const [selectedCheck, setselectedCheck] = useState('');
-  const getDate = (date: Date) => new Intl.DateTimeFormat('en-GB', { dateStyle: 'full' }).format(date);
+  const [loadingTodos, setLoadingTodos] = useState<number[]>([]);
 
-  const creationDate = (date: Date) => {
-    const timeDifference = new Date().getTime() - date.getTime();
-    const daysAgo = Math.floor(timeDifference / (1000 * 3600 * 24));
-    return `${daysAgo} days ago`;
-  };
+  const queryClient = useQueryClient();
+
+  const { data } = useQuery({
+    queryKey: ['todos'],
+    queryFn: fetchData,
+    initialData: todos,
+  });
+
+  const { mutate: updateCheckbox } = useMutation({
+    mutationFn: ({ id, bool }: { id: number; bool: boolean }) => serverCheckBox(id, bool),
+    onMutate: ({ id, bool }) => console.log(id, bool),
+    onSuccess: () => {
+      setLoadingTodos([]);
+      queryClient.invalidateQueries({ queryKey: ['todos'] });
+    },
+  });
+
+  const { mutate: updatePriority } = useMutation({
+    mutationFn: ({ id, value }: { id: number; value: any }) => serverPriority(id, value),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['todos'] });
+    },
+  });
+
+  const { mutate: deleteTodo } = useMutation({
+    mutationFn: ({ id }: { id: number }) => deleteSingle(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['todos'] });
+    },
+  });
 
   const filteredItems = useMemo(() => {
     const lowerSearch = (i: string) => i.toLowerCase().includes(search.toLowerCase());
-    return todos
+    return data
       .filter((item) => lowerSearch(item.title) || (item.content && lowerSearch(item.content)))
-      .filter((item) => (selectedPriority ? item.priority === selectedPriority : true))
+      .filter((item) => (selectedPriority ? item.priority === selectedPriority : 'true'))
       .filter((item) => (selectedCheck ? item?.check?.toString() == selectedCheck : true));
-  }, [todos, search, selectedPriority, selectedCheck]);
+  }, [data, search, selectedPriority, selectedCheck]);
 
   return (
     <div className='flex flex-col gap-2 container mx-auto w-full'>
@@ -42,32 +76,41 @@ function FilteredItems({ todos }: { todos: todos[] }) {
         check={selectedCheck}
         setCheck={setselectedCheck}
       />
+
       {filteredItems.length > 0
-        ? filteredItems.map((todo) => (
-            <li
-              key={todo.id}
-              className={`flex flex-col gap-2 bg-slate-800 w-full text-gray-100 container mx-auto hover:bg-slate-900 `}
-            >
+        ? filteredItems.map((todo: todos) => {
+            const isTodoLoading = loadingTodos.includes(todo.id);
+            return (
               <div
-                className={`flex flex-col justify-around items-center p-5 cursor-pointer ${
-                  todo.check ? 'bg-slate-500 line-through' : ''
-                }`}
-                onClick={() => updateCheckbox(todo.id, todo.check!)}
+                key={todo.id}
+                className={`flex flex-col gap-2 bg-slate-800 w-full text-gray-100 container mx-auto hover:bg-slate-900 `}
               >
-                <div className='text-2xl'>{todo.title}</div>
-                <div className='text-xl'> {todo.content}</div>
-              </div>
-              <div className='md:grid md:grid-cols-4 md:justify-items-center gap-2 container mx-auto flex flex-col items-center bg-slate-950 w-full p-2'>
-                <div>
-                  <code className='italic text-sm'>DueDate: {getDate(todo.dueDate!)}</code>
-                  <div className='italic text-sm'>Created: {creationDate(todo.createdAt!)}</div>
+                <button
+                  className={clsx(
+                    'flex flex-col justify-around items-center p-5 cursor-pointer',
+                    todo.check && 'bg-slate-500 opacity-50 line-through'
+                  )}
+                  onClick={() => {
+                    setLoadingTodos((prev) => [...prev, todo.id]);
+                    updateCheckbox({ id: todo.id, bool: todo.check! });
+                  }}
+                  disabled={isTodoLoading}
+                >
+                  <div className='text-2xl'>{todo.title}</div>
+                  {!isTodoLoading ? <div className='text-xl'> {todo.content}</div> : <Loading />}
+                </button>
+                <div className='md:grid md:grid-cols-4 md:justify-items-center gap-2 container mx-auto flex flex-col items-center bg-slate-950 w-full p-2'>
+                  <div>
+                    <code className='italic text-sm'>DueDate: {getDate(todo.dueDate!)}</code>
+                    <div className='italic text-sm'>Created: {creationDate(todo.createdAt!)}</div>
+                  </div>
+                  <SelectPriority todo={todo} />
+                  <CheckboxHandler todo={todo} updateCheckbox={updateCheckbox} setLoadingTodos={setLoadingTodos} />
+                  <DeleteButton id={todo.id} deleteTodo={deleteTodo} />
                 </div>
-                <SelectPriority todo={todo} />
-                <CheckboxHandler todo={todo} />
-                <DeleteButton id={todo.id} />
               </div>
-            </li>
-          ))
+            );
+          })
         : null}
     </div>
   );
