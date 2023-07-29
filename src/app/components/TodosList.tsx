@@ -26,6 +26,7 @@ function FilteredItems({ todos }: { todos: todos[] }) {
 
   const { mutate: updateCheckbox } = useMutation({
     mutationFn: ({ id, bool }: { id: number; bool: boolean }) => serverCheckBox(id, bool),
+
     onMutate: async ({ id, bool }) => {
       await queryClient.cancelQueries({ queryKey: ['todos'] });
       const previousTodos = queryClient.getQueryData(['todos']);
@@ -34,16 +35,20 @@ function FilteredItems({ todos }: { todos: todos[] }) {
       });
       return { previousTodos };
     },
-    onSettled: () => {
+
+    onError: (error, variables, context) => {
+      // If the mutation encounters an error, revert the cache to the previous state
+      queryClient.setQueryData(['todos'], context?.previousTodos);
+    },
+
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['todos'] });
     },
   });
 
   const { mutate: updatePriority } = useMutation({
     mutationFn: ({ id, priority }: { id: number; priority: todos['priority'] }) => serverPriority(id, priority),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['todos'] });
-    },
+
     onMutate: async ({ id, priority }) => {
       await queryClient.cancelQueries({ queryKey: ['todos'] });
       const previousTodos = queryClient.getQueryData(['todos']);
@@ -52,7 +57,13 @@ function FilteredItems({ todos }: { todos: todos[] }) {
       });
       return { previousTodos };
     },
-    onSettled: () => {
+
+    onError: (error, variables, context) => {
+      // If the mutation encounters an error, revert the cache to the previous state
+      queryClient.setQueryData(['todos'], context?.previousTodos);
+    },
+
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['todos'] });
     },
   });
@@ -62,12 +73,19 @@ function FilteredItems({ todos }: { todos: todos[] }) {
     onMutate: async ({ id }) => {
       await queryClient.cancelQueries({ queryKey: ['todos'] });
       const previousTodos = queryClient.getQueryData(['todos']);
+
       queryClient.setQueryData<todos[] | undefined>(['todos'], (oldData) => {
         return (oldData ?? []).filter((todo) => todo.id !== id);
       });
       return { previousTodos };
     },
-    onSettled: () => {
+
+    onError: (error, variables, context) => {
+      // If the mutation encounters an error, revert the cache to the previous state
+      queryClient.setQueryData(['todos'], context?.previousTodos);
+    },
+
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['todos'] });
     },
   });
