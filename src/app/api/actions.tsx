@@ -2,7 +2,6 @@
 import { eq } from 'drizzle-orm';
 import db from '../../../database/db';
 import todoSchema, { type todos } from '../../../database/schema';
-import { revalidatePath } from 'next/cache';
 
 async function createPost(data: FormData) {
   const title = (data.get('title') as string).trim();
@@ -13,7 +12,6 @@ async function createPost(data: FormData) {
 
   if (!title || !content) return;
   await db.insert(todoSchema).values({ title, content, check: check == 'on' ? true : false, priority, dueDate });
-  revalidatePath('/');
 }
 
 async function getData() {
@@ -23,16 +21,17 @@ async function getData() {
 
 async function deleteSingle(id: number) {
   await db.delete(todoSchema).where(eq(todoSchema.id, id));
-  revalidatePath('/');
 }
 
 async function serverCheckBox(id: number, bool: boolean): Promise<void> {
   await db.update(todoSchema).set({ check: !bool }).where(eq(todoSchema.id, id));
 }
 
-async function serverPriority(id: number, value: todos['priority']) {
-  await db.update(todoSchema).set({ priority: value }).where(eq(todoSchema.id, id));
-  revalidatePath('/');
+async function serverPriority(id: number, priority: todos['priority']) {
+  await db
+    .update(todoSchema)
+    .set({ priority: priority ?? 'Medium' })
+    .where(eq(todoSchema.id, id));
 }
 
 export { createPost, getData, deleteSingle, serverCheckBox, serverPriority };

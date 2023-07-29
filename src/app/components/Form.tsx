@@ -34,7 +34,7 @@ function Form({ defaultShow }: { defaultShow: boolean }) {
         <form
           action={mutate}
           ref={formRef}
-          className='bg-black bg-opacity-70 w-5/6 backdrop-blur-sm rounded drop-shadow-lg fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-blue-300 p-10'
+          className='bg-black bg-opacity-70 sm:w-5/6 w-screen backdrop-blur-sm rounded drop-shadow-lg fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-blue-300 sm:p-10 z-10'
         >
           <button
             type='button'

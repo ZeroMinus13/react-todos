@@ -1,12 +1,11 @@
 'use client';
 import { UseMutateFunction } from '@tanstack/react-query/build/lib/types';
 import { type todos } from '../../../database/schema';
-import { useState, type SetStateAction, useEffect } from 'react';
 
-function DeleteButton({ id, deleteTodo }: DeleteButton) {
+function DeleteButton({ id, deleteTodo }: Deletebutton) {
   return (
     <button
-      className='bg-red-500 text-white hover:bg-red-800 w-40 p-1 bold transition-transform hover:scale-110'
+      className='bg-red-500 text-white hover:bg-red-800 sm:w-40 p-2 px-3 rounded-lg bold transition-transform hover:scale-110'
       onClick={() => deleteTodo({ id })}
     >
       Delete
@@ -14,28 +13,25 @@ function DeleteButton({ id, deleteTodo }: DeleteButton) {
   );
 }
 
-function CheckboxHandler({ todo, updateCheckbox, setLoadingTodos }: Checkbox) {
+function CheckboxHandler({ todo, updateCheckbox }: Checkbox) {
   return (
     <input
       type='checkbox'
       checked={todo.check!}
-      onChange={() => {
-        setLoadingTodos((prev) => [...prev, todo.id]);
-        updateCheckbox({ id: todo.id, bool: todo.check! });
-      }}
+      onChange={() => updateCheckbox({ id: todo.id, bool: todo.check! })}
       name='check'
       className='w-5 h-5 cursor-pointer'
     />
   );
 }
 
-function SelectPriority({ todo }: { todo: todos }) {
+function SelectPriority({ todo, updatePriority }: updatePriority) {
   return (
     <select
       name='priority'
-      // onChange={(e) => updatePriority(todo.id, e.target.value as todos['priority'])}
+      onChange={(e) => updatePriority({ id: todo.id, priority: e.target.value as todos['priority'] })}
       value={todo.priority!}
-      className='block  p-2 rounded-lg focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500 bg-gray-700 border-gray-600 placeholder-gray-400 text-white cursor-pointer '
+      className='w-fit p-3 rounded-lg focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500 bg-gray-700 border-gray-600 placeholder-gray-400 text-white cursor-pointer '
     >
       <option value='High'>High</option>
       <option value='Medium'>Medium</option>
@@ -81,7 +77,7 @@ function ChangeSelectedTodos({
           onChange={(e) => setCheck(e.target.value)}
           value={check}
           id='check'
-          className='block  p-2 rounded-lg focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500 bg-gray-700 border-gray-600 placeholder-gray-400 text-white cursor-pointer '
+          className='block p-2 rounded-lg focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500 bg-gray-700 border-gray-600 placeholder-gray-400 text-white cursor-pointer '
         >
           <option value=''>All</option>
           <option value='true'>Completed</option>
@@ -91,27 +87,22 @@ function ChangeSelectedTodos({
     </div>
   );
 }
+type TSMutate<T> = UseMutateFunction<void, unknown, T, unknown>;
+
+type TSMutate2<T> = UseMutateFunction<void, unknown, T, { previousTodos: unknown }>;
+
 type Checkbox = {
   todo: todos;
-  updateCheckbox: UseMutateFunction<
-    void,
-    unknown,
-    {
-      id: number;
-      bool: boolean;
-    }
-  >;
-  setLoadingTodos: (value: SetStateAction<number[]>) => void;
+  updateCheckbox: TSMutate2<{ id: number; bool: boolean }>;
 };
-type DeleteButton = {
+
+type Deletebutton = {
   id: number;
-  deleteTodo: UseMutateFunction<
-    void,
-    unknown,
-    {
-      id: number;
-    },
-    unknown
-  >;
+  deleteTodo: TSMutate<{ id: number }>;
+};
+
+type updatePriority = {
+  todo: todos;
+  updatePriority: TSMutate<{ id: number; priority: todos['priority'] }>;
 };
 export { DeleteButton, CheckboxHandler, SelectPriority, ChangeSelectedTodos };
