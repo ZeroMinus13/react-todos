@@ -8,11 +8,8 @@ function Form({ defaultShow }: { defaultShow: boolean }) {
   const formRef = useRef<HTMLFormElement>(null);
 
   const queryClient = useQueryClient();
-  const { mutate, isLoading } = useMutation(createPost, {
-    onMutate: (data) => {
-      console.log(data);
-    },
-    onSuccess: (data) => {
+  const { mutate, isLoading, isError, error } = useMutation(createPost, {
+    onSuccess: () => {
       formRef?.current?.reset();
       setShow(false);
       queryClient.invalidateQueries(['todos']);
@@ -26,7 +23,7 @@ function Form({ defaultShow }: { defaultShow: boolean }) {
     <>
       <button
         onClick={() => setShow(!show)}
-        className='text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-600 font-medium rounded-lg px-5 py-2.5 mb-2'
+        className='text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-600 font-medium rounded-lg px-5 py-2.5 m-2'
       >
         {show ? '➕ Hide' : '➕ Add a Task'}
       </button>
@@ -44,10 +41,11 @@ function Form({ defaultShow }: { defaultShow: boolean }) {
             X
           </button>
           <div className='flex flex-col items-center p-5 gap-2 w-6/6'>
+            {isError && <p className='text-red-500 font-bold text-xl'>{(error as Error).toString()}</p>}
             <label className='font-bold text-2xl ' htmlFor='title'>
               Title
             </label>
-            <input name='title' id='title' required maxLength={20} className={`${formCSS}`} />
+            <input name='title' id='title' required maxLength={20} className={formCSS} />
 
             <label className='font-bold text-2xl' htmlFor='content'>
               Description
@@ -58,7 +56,7 @@ function Form({ defaultShow }: { defaultShow: boolean }) {
               <label className='font-bold text-xl p-5' htmlFor='check'>
                 Completed
               </label>
-              <input name='check' type={'checkbox'} id='check' className='w-4 h-4' />
+              <input name='check' type='checkbox' id='check' className='w-4 h-4' />
             </span>
 
             <label htmlFor='dueDate' className='font-bold text-2xl'>
@@ -70,7 +68,7 @@ function Form({ defaultShow }: { defaultShow: boolean }) {
               id='dueDate'
               required
               className='bg-gray-700 text-white p-2'
-              defaultValue={new Date().toISOString().split('T')[0]}
+              defaultValue={new Date().toISOString()}
             />
 
             <label htmlFor='priority' className='font-bold text-2xl'>

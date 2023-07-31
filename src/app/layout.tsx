@@ -1,4 +1,4 @@
-import QueryProvider from './components/QueryProvider';
+import Providers from './components/Providers';
 import './globals.css';
 import { Inter } from 'next/font/google';
 
@@ -14,7 +14,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang='en'>
       <link rel='icon' href='/icon?<generated>' type='image/<generated>' sizes='<generated>' />
       <body className={inter.className}>
-        <QueryProvider>{children}</QueryProvider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
