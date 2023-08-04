@@ -29,7 +29,7 @@ export default function Navbar() {
         </div>
       ) : (
         <div className='w-screen flex justify-end'>
-          <button className={clsx(btnCss)} onClick={() => signIn('google')}>
+          <button className={clsx(btnCss)} onClick={() => signIn()}>
             Sign In
           </button>
         </div>

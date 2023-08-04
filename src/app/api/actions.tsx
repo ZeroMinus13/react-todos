@@ -1,19 +1,11 @@
 'use server';
-import { getServerSession } from 'next-auth';
 import { prisma } from '../../../prisma/dbConnection';
-import { authOptions } from './auth/[...nextauth]/route';
-
-const getSession = async () => {
-  const session = await getServerSession(authOptions);
-  return session;
-};
+import { getSession } from './auth/[...nextauth]/route';
 
 const getCurrentUser = async () => {
   const session = await getSession();
-  if (!session) {
-    return null;
-  }
-  const currentUser = await prisma.user.findFirst({ where: { id: session?.user?.id } });
+  if (!session) return null;
+  const currentUser = await prisma.user.findFirst({ where: { email: session?.user?.email } });
   return currentUser;
 };
 
@@ -43,10 +35,18 @@ async function getData() {
 }
 
 async function deleteSingle(id: number) {
+  let currentUser = await getCurrentUser();
+  if (!currentUser) {
+    throw new Error('Please Log In!');
+  }
   await prisma.todo.delete({ where: { id } });
 }
 
 async function serverCheckBox(id: number, bool: boolean): Promise<void> {
+  let currentUser = await getCurrentUser();
+  if (!currentUser) {
+    throw new Error('Please Log In!');
+  }
   await prisma.todo.update({
     data: { check: !bool },
     where: { id: id },
@@ -54,6 +54,10 @@ async function serverCheckBox(id: number, bool: boolean): Promise<void> {
 }
 
 async function serverPriority(id: number, priority: string) {
+  let currentUser = await getCurrentUser();
+  if (!currentUser) {
+    throw new Error('Please Log In!');
+  }
   await prisma.todo.update({
     data: { priority: priority },
     where: { id: id },

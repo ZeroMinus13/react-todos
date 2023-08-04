@@ -68,7 +68,7 @@ function Form({ defaultShow }: { defaultShow: boolean }) {
               id='dueDate'
               required
               className='bg-gray-700 text-white p-2'
-              defaultValue={new Date().toISOString()}
+              defaultValue={new Date().toISOString().slice(0, 10)}
             />
 
             <label htmlFor='priority' className='font-bold text-2xl'>

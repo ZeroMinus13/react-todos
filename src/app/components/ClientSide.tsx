@@ -90,7 +90,7 @@ export function ChangeSelectedTodos({
   );
 }
 export function Todotitle({ todo, updateCheckbox }: Todotitle) {
-  const [classNames, setClassNames] = useState('flex flex-col justify-around items-center py-5 cursor-pointer');
+  const [classNames, setClassNames] = useState('flex flex-col justify-around items-center py-5');
 
   useEffect(() => {
     setClassNames(
