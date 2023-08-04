@@ -5,6 +5,7 @@ import { Suspense } from 'react';
 import { getData } from './api/actions';
 import Navbar from './components/Navbar';
 import ErrorBoundary from './components/ErrorBoundry';
+
 async function Home() {
   const users = await getData();
 
