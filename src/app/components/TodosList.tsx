@@ -4,31 +4,23 @@ import { DeleteButton, CheckboxHandler, SelectPriority, ChangeSelectedTodos, Tod
 import { useQueryClient, useQuery, useMutation } from '@tanstack/react-query';
 import { getData } from '../api/actions';
 import { deleteSingle, serverCheckBox, serverPriority } from '../api/actions';
-import { type Todo, type User, Prisma } from '@prisma/client';
+import { Prisma, type User, type Todo } from '@prisma/client';
 import Image from 'next/image';
 import { useSession } from 'next-auth/react';
+import Loading from './Loading';
 
-async function fetchData() {
-  const users = await getData();
-  return users;
-}
-type UserWithPosts = Prisma.UserGetPayload<{ include: { todo: true } }>;
+type UserWithPosts = Prisma.UserGetPayload<{ include: { todo: true } }> | undefined;
 
-interface userTS extends User {
-  todo: Todo[];
-}
-
-function FilteredItems({ users }: { users: UserWithPosts[] }) {
+function FilteredItems() {
   const [search, setSearch] = useState('');
   const [selectedPriority, setselectedPriority] = useState('');
   const [selectedCheck, setselectedCheck] = useState('');
   const queryClient = useQueryClient();
   const { data: session } = useSession();
 
-  const { data, isError, error } = useQuery<UserWithPosts[]>({
+  const { data, isError, error, isLoading } = useQuery({
     queryKey: ['todos'],
-    queryFn: fetchData,
-    initialData: users,
+    queryFn: () => getData(),
   });
 
   const updateCheckbox = useMutation({
@@ -37,11 +29,10 @@ function FilteredItems({ users }: { users: UserWithPosts[] }) {
     onMutate: async ({ id, bool }) => {
       await queryClient.cancelQueries({ queryKey: ['todos'] });
       const previousTodos = queryClient.getQueryData(['todos']);
-      queryClient.setQueryData<userTS[]>(['todos'], (oldData) => {
-        return oldData?.map((user) => ({
-          ...user,
-          todo: user.todo.map((item) => (item.id === id ? { ...item, check: !bool } : item)),
-        }));
+      queryClient.setQueryData<UserWithPosts>(['todos'], (oldData) => {
+        if (!oldData) return oldData;
+        const updatedTodos = oldData.todo.map((item) => (item.id === id ? { ...item, check: !bool } : item));
+        return { ...oldData, todo: updatedTodos };
       });
       return { previousTodos };
     },
@@ -56,11 +47,12 @@ function FilteredItems({ users }: { users: UserWithPosts[] }) {
     onMutate: async ({ id, priority }) => {
       await queryClient.cancelQueries({ queryKey: ['todos'] });
       const previousTodos = queryClient.getQueryData(['todos']);
-      queryClient.setQueryData<userTS[]>(['todos'], (oldData) => {
-        return oldData?.map((user) => ({
-          ...user,
-          todo: user.todo.map((item) => (item.id === id ? { ...item, priority } : item)),
-        }));
+      queryClient.setQueryData<UserWithPosts>(['todos'], (oldData) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          todo: oldData.todo.map((item) => (item.id === id ? { ...item, priority } : item)),
+        };
       });
       return { previousTodos };
     },
@@ -74,22 +66,35 @@ function FilteredItems({ users }: { users: UserWithPosts[] }) {
     onMutate: async ({ id }) => {
       await queryClient.cancelQueries({ queryKey: ['todos'] });
       const previousTodos = queryClient.getQueryData(['todos']);
-      queryClient.setQueryData<userTS[]>(['todos'], (oldData) => {
-        return oldData?.map((user) => ({ ...user, todo: user.todo.filter((todo) => todo.id !== id) }));
+      queryClient.setQueryData<UserWithPosts>(['todos'], (oldData) => {
+        if (!oldData) return oldData;
+        const updatedTodos = oldData.todo.filter((item) => item.id !== id);
+        return { ...oldData, todo: updatedTodos };
       });
+
       return { previousTodos };
     },
     onError: (error, variables, context) => queryClient.setQueryData(['todos'], context?.previousTodos),
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['todos'] }),
   });
 
+  if (!session) {
+    return <p className='text-red-400 text-center text-xl'>Please Log in to make changes.</p>;
+  }
+  if (!data || isLoading) {
+    return <Loading />;
+  }
+
+  if (isError && error instanceof Error) {
+    return <div>{error.message}</div>;
+  }
+
   const lowerSearch = (i: string) => i.toLowerCase().includes(search.toLowerCase());
-  const filteredItems = data
-    .flatMap((user) => user.todo)
+
+  const filteredTodos = data.todo
     .filter((item) => lowerSearch(item.title) || lowerSearch(item.content))
     .filter((item) => !selectedPriority || item.priority === selectedPriority)
-    .filter((item) => !selectedCheck || item?.check?.toString() === selectedCheck)
-    .map((todo) => ({ user: data?.find((user) => user.todo.includes(todo)), todo }));
+    .filter((item) => !selectedCheck || item?.check?.toString() === selectedCheck);
 
   const getDate = (date: Date) => new Intl.DateTimeFormat('en-GB', { dateStyle: 'full' }).format(date);
   const creationDate = (date: Date) => {
@@ -98,27 +103,25 @@ function FilteredItems({ users }: { users: UserWithPosts[] }) {
     return `${daysAgo} days ago`;
   };
 
-  if (isError) return <p>{(error instanceof Error).toString()}</p>;
-
   return (
     <div className='flex flex-col gap-2 container mx-auto w-full'>
       <input
         type='text'
-        placeholder='Search'
+        placeholder='Search...'
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         className='block w-full p-4 rounded-lg focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500 bg-gray-700 border-gray-600 placeholder-gray-400 text-white'
       />
 
-      <span className='text-gray-100 text-center text-2xl'>Total Todos: {filteredItems.length}</span>
+      <span className='text-gray-100 text-center text-2xl'>Total Todos: {filteredTodos.length}</span>
       <ChangeSelectedTodos
         priority={selectedPriority}
         setPriority={setselectedPriority}
         check={selectedCheck}
         setCheck={setselectedCheck}
       />
-      {!session && <p className='text-red-400 text-center text-xl'>Please Log in to make changes.</p>}
-      {filteredItems.map(({ user, todo }) => {
+
+      {filteredTodos.map((todo) => {
         return (
           <div
             key={todo.id}
@@ -128,16 +131,16 @@ function FilteredItems({ users }: { users: UserWithPosts[] }) {
             <div className='gap-2 flex flex-col sm:flex-row sm:justify-between bg-slate-950 w-full p-2 rounded-lg'>
               <div className={'flex flex-col gap-2'}>
                 <div>
-                  {user?.image && (
+                  {data?.image && (
                     <Image
-                      src={user?.image}
-                      alt={user?.name ?? 'User Image'}
+                      src={data?.image}
+                      alt={data?.name ?? 'User Image'}
                       width={40}
                       height={40}
                       className='rounded-full w-10 h-10 inline mr-2'
                     />
                   )}
-                  <span className='hidden sm:inline'>{user?.name}</span>
+                  <span className='hidden sm:inline'>{data?.name}</span>
                   <p className='italic text-sm hidden sm:block'>DueDate: {getDate(todo.dueDate)}</p>
                 </div>
                 <div className='flex gap-5'>

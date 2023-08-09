@@ -25,7 +25,7 @@ export default class ErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
-      return <h1 className='text-3xl text-center'>Something went wrong.</h1>;
+      return <h1 className='text-3xl text-center text-red-400'>Something went wrong.</h1>;
     }
 
     return this.props.children;

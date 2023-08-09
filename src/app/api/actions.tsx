@@ -3,11 +3,22 @@ import { prisma } from '../../../prisma/dbConnection';
 import { getSession } from './auth/[...nextauth]/route';
 
 const getCurrentUser = async () => {
-  const session = await getSession();
-  if (!session) return null;
-  const currentUser = await prisma.user.findFirst({ where: { email: session?.user?.email } });
+  const user = await getSession();
+  if (!user) {
+    return null;
+  }
+  const currentUser = await prisma.user.findFirst({ where: { email: user.email } });
   return currentUser;
 };
+
+async function getData() {
+  let currentUser = await getCurrentUser();
+  if (!currentUser) {
+    return null;
+  }
+  const usersWithTodos = await prisma.user.findFirst({ where: { id: currentUser.id }, include: { todo: true } });
+  return usersWithTodos;
+}
 
 async function createPost(data: FormData) {
   let currentUser = await getCurrentUser();
@@ -27,11 +38,6 @@ async function createPost(data: FormData) {
   await prisma.todo.create({
     data: { title, content, check, priority, dueDate, author: { connect: { id: currentUser.id } } },
   });
-}
-
-async function getData() {
-  const usersWithTodos = await prisma.user.findMany({ include: { todo: true } });
-  return usersWithTodos;
 }
 
 async function deleteSingle(id: number) {
